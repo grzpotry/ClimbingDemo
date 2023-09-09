@@ -22,12 +22,20 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> ClimbableSurfaceTraceTypes;
 
-	void TraceClimbableSurfaces();
-	void TraceFromEyeHeight(float TraceDistance, float TraceStartOffset = 0.f);
-	
+	TArray<FHitResult> TraceClimbableSurfaces();
+	FHitResult TraceFromEyeHeight(float TraceDistance, float TraceStartOffset = 0.f);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float ClimbCapsuleTraceRadius = 50.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float ClimbCapsuleTraceHalfHeight = 75.f;
+
+public:
+	
+	void StartClimbing();
+	void StopClimbing();
+
+	bool IsClimbing() const;
+	bool CanClimb();
 };

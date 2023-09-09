@@ -26,9 +26,7 @@ AClimbingDemoCharacter::AClimbingDemoCharacter(const FObjectInitializer& ObjectI
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-
-	CustomMovementComponent = Cast<UCustomMovementComponent>(GetCharacterMovement());
-
+	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
@@ -71,6 +69,8 @@ void AClimbingDemoCharacter::BeginPlay()
 
 		Debug::Print(TEXT("Hello world"));
 	}
+
+	CustomMovementComponent = Cast<UCustomMovementComponent>(GetCharacterMovement());
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -135,7 +135,20 @@ void AClimbingDemoCharacter::Look(const FInputActionValue& Value)
 
 void AClimbingDemoCharacter::OnClimbActionStarted(const FInputActionValue& Value)
 {
-	Debug::Print(TEXT("OnClimbActionStarted"));
+	if (!CustomMovementComponent)
+	{
+		Debug::Print(TEXT("Null CustomMovementComponent"));
+		return;
+	}
+
+	if (CustomMovementComponent->IsClimbing())
+	{
+		CustomMovementComponent->StopClimbing();
+	}
+	else
+	{
+		CustomMovementComponent->StartClimbing();
+	}
 }
 
 
