@@ -6,6 +6,12 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CustomMovementComponent.generated.h"
 
+UENUM(BlueprintType)
+enum class ECustomMovementMode : uint8
+{
+	MOVE_Climb = 0 UMETA(DisplayName = "Climb Mode")
+};
+
 /**
  * 
  */
@@ -30,6 +36,9 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float ClimbCapsuleTraceHalfHeight = 75.f;
+
+protected:
+	void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 
 public:
 	

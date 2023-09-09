@@ -5,6 +5,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "ClimbingDemo/ClimbingDemoCharacter.h"
 #include "ClimbingDemo/DebugHelper.h"
+#include "Components/CapsuleComponent.h"
 
 void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                              FActorComponentTickFunction* ThisTickFunction)
@@ -69,6 +70,28 @@ FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, flo
 	return DoLineTraceSingleByObject(Start, End, true);
 }
 
+void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
+{
+	if (IsClimbing())
+	{
+		bOrientRotationToMovement = false;
+		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(48.f);
+
+		Debug::Print(TEXT("OnMovementModeChanged IsClimbing"));
+	}
+
+	if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode ==  static_cast<uint8>(ECustomMovementMode::MOVE_Climb))
+	{
+		bOrientRotationToMovement = true;
+		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(96.f);
+		StopMovementImmediately();
+
+		Debug::Print(TEXT("OnMovementModeChanged stopped climbing"));
+	}
+	
+	UCharacterMovementComponent::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+}
+
 void UCustomMovementComponent::StartClimbing()
 {
 	if (!CanClimb())
@@ -77,17 +100,25 @@ void UCustomMovementComponent::StartClimbing()
 		return;
 	}
 
+	if (IsClimbing())
+	{
+		Debug::Print(TEXT("Already climbing"));
+		return;
+	}
+
 	Debug::Print(TEXT("Climbing started"));
+	SetMovementMode(EMovementMode::MOVE_Custom, static_cast<uint8>(ECustomMovementMode::MOVE_Climb));
 }
 
 void UCustomMovementComponent::StopClimbing()
 {
-	Debug::Print(TEXT("Stop climbing not implemented"));
+	Debug::Print(TEXT("StopClimbing"));
+	SetMovementMode(EMovementMode::MOVE_Falling);
 }
 
 bool UCustomMovementComponent::IsClimbing() const
 {
-	return MovementMode == MOVE_Custom && CustomMovementMode; // TODO: && CustomMovementMode == Climbing
+	return MovementMode == MOVE_Custom && CustomMovementMode == static_cast<uint8>(ECustomMovementMode::MOVE_Climb);
 }
 
 bool UCustomMovementComponent::CanClimb()
