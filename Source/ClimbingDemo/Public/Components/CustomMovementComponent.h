@@ -36,9 +36,19 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float ClimbCapsuleTraceHalfHeight = 75.f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	float MaxBreakClimbDeceleration = 75.f;
+
+	FVector CurrentClimbableSurfaceLocation;
+	FVector CurrentClimbableSurfaceNormal;
+
+	void UpdateClimbableSurfaceInfo();
 
 protected:
 	void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
+	void PhysClimb(float deltaTime, int32 Iterations);
 
 public:
 	

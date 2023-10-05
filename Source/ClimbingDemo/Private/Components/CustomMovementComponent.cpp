@@ -57,7 +57,7 @@ TArray<FHitResult> UCustomMovementComponent::TraceClimbableSurfaces()
 	FVector start = UpdatedComponent->GetComponentLocation() + offset;
 	FVector end = start + forwardVector;
 
-	return DoCapsuleTraceMultiByObject(start, end, true);
+	return DoCapsuleTraceMultiByObject(start, end);
 }
 
 FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset)
@@ -67,7 +67,32 @@ FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, flo
 	const FVector Start = ComponentLocation + EyeHeightOffset;
 	const FVector End = Start + UpdatedComponent-> GetForwardVector() * TraceDistance;
 
-	return DoLineTraceSingleByObject(Start, End, true);
+	return DoLineTraceSingleByObject(Start, End);
+}
+
+void UCustomMovementComponent::UpdateClimbableSurfaceInfo()
+{
+	const TArray<FHitResult> climbableSurfaces = TraceClimbableSurfaces();
+
+	CurrentClimbableSurfaceLocation = FVector::ZeroVector;
+	CurrentClimbableSurfaceNormal = FVector::ZeroVector;
+
+	if (climbableSurfaces.IsEmpty())
+	{
+		return;
+	}
+
+	for (const FHitResult& ClimbableSurface : climbableSurfaces)
+	{
+		CurrentClimbableSurfaceLocation += ClimbableSurface.ImpactPoint;
+		CurrentClimbableSurfaceNormal += ClimbableSurface.ImpactNormal;
+	}
+
+	CurrentClimbableSurfaceLocation /= climbableSurfaces.Num();
+	CurrentClimbableSurfaceNormal = CurrentClimbableSurfaceNormal.GetSafeNormal(); // ?
+
+	Debug::Print(TEXT("Location: " + CurrentClimbableSurfaceLocation.ToCompactString()), FColor::Cyan, 1);
+	Debug::Print(TEXT("Normal: " + CurrentClimbableSurfaceNormal.ToCompactString()), FColor::Red, 2);;
 }
 
 void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -77,7 +102,7 @@ void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovem
 		bOrientRotationToMovement = false;
 		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(48.f);
 
-		Debug::Print(TEXT("OnMovementModeChanged IsClimbing"));
+		Debug::PrintWithStack(TEXT("OnMovementModeChanged IsClimbing"));
 	}
 
 	if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode ==  static_cast<uint8>(ECustomMovementMode::MOVE_Climb))
@@ -90,6 +115,58 @@ void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovem
 	}
 	
 	UCharacterMovementComponent::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+}
+
+void UCustomMovementComponent::PhysCustom(float deltaTime, int32 Iterations)
+{
+	if (IsClimbing())
+	{
+		PhysClimb(deltaTime, Iterations);
+	}
+	Super::PhysCustom(deltaTime, Iterations);
+}
+
+void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
+{
+	if (deltaTime < MIN_TICK_TIME)
+	{
+		return;
+	}
+
+	//calculate climbable surface, check if climbing
+	UpdateClimbableSurfaceInfo();
+
+
+	//boilerplate code from PhysFly
+	RestorePreAdditiveRootMotionVelocity();
+
+	if( !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() )
+	{
+		//define speed and acc
+		CalcVelocity(deltaTime, 0.f, true, MaxBreakClimbDeceleration);
+	}
+
+	ApplyRootMotionToVelocity(deltaTime);
+
+	FVector OldLocation = UpdatedComponent->GetComponentLocation();
+	const FVector Adjusted = Velocity * deltaTime;
+	FHitResult Hit(1.f);
+
+	//handle rotation
+	SafeMoveUpdatedComponent(Adjusted, UpdatedComponent->GetComponentQuat(), true, Hit);
+
+	if (Hit.Time < 1.f)
+	{
+		//adjust and try again
+		HandleImpact(Hit, deltaTime, Adjusted);
+		SlideAlongSurface(Adjusted, (1.f - Hit.Time), Hit.Normal, Hit, true);
+	}
+
+	//snap movement to climbable surfaces
+	if (!HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() )
+	{
+		Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / deltaTime;
+	}
 }
 
 void UCustomMovementComponent::StartClimbing()
