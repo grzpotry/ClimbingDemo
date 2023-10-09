@@ -39,9 +39,17 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float MaxBreakClimbDeceleration = 75.f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	float MaxClimbSpeed = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	float MaxClimbAcceleration = 300.f;
 
 	FVector CurrentClimbableSurfaceLocation;
 	FVector CurrentClimbableSurfaceNormal;
+
+	void SnapMovementToClimbableSurfaces(float DeltaTime);
 
 	void UpdateClimbableSurfaceInfo();
 
@@ -50,8 +58,12 @@ protected:
 	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
 	void PhysClimb(float deltaTime, int32 Iterations);
 
+	virtual float GetMaxSpeed() const override;
+	virtual float GetMaxAcceleration() const override;
+
 public:
-	
+
+	FQuat GetClimbRotation(float DeltaTime);
 	void StartClimbing();
 	void StopClimbing();
 
