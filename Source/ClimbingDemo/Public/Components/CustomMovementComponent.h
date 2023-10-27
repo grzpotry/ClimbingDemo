@@ -62,7 +62,7 @@ protected:
 	virtual float GetMaxAcceleration() const override;
 
 public:
-
+	FORCEINLINE FVector GetCurrentClimbableSurfaceNormal() const { return CurrentClimbableSurfaceNormal; }
 	FQuat GetClimbRotation(float DeltaTime);
 	void StartClimbing();
 	void StopClimbing();

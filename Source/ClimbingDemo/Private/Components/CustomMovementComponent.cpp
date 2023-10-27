@@ -91,8 +91,8 @@ void UCustomMovementComponent::UpdateClimbableSurfaceInfo()
 	CurrentClimbableSurfaceLocation /= climbableSurfaces.Num();
 	CurrentClimbableSurfaceNormal = CurrentClimbableSurfaceNormal.GetSafeNormal();
 
-	Debug::Print(TEXT("Location: " + CurrentClimbableSurfaceLocation.ToCompactString()), FColor::Cyan, 1);
-	Debug::Print(TEXT("Normal: " + CurrentClimbableSurfaceNormal.ToCompactString()), FColor::Red, 2);;
+	//Debug::Print(TEXT("Location: " + CurrentClimbableSurfaceLocation.ToCompactString()), FColor::Cyan, 1);
+	//Debug::Print(TEXT("Normal: " + CurrentClimbableSurfaceNormal.ToCompactString()), FColor::Red, 2);;
 }
 
 void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -109,6 +109,8 @@ void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovem
 	{
 		bOrientRotationToMovement = true;
 		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(96.f);
+
+		UpdatedComponent->SetRelativeRotation(FRotator(0.f, UpdatedComponent->GetComponentRotation().Yaw, 0.f));
 		StopMovementImmediately();
 
 		Debug::Print(TEXT("OnMovementModeChanged stopped climbing"));
