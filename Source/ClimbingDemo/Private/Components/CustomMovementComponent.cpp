@@ -2,6 +2,9 @@
 
 
 #include "Components/CustomMovementComponent.h"
+
+#include <string>
+
 #include "Kismet/KismetSystemLibrary.h"
 #include "ClimbingDemo/ClimbingDemoCharacter.h"
 #include "ClimbingDemo/DebugHelper.h"
@@ -170,6 +173,12 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 	 }
 
 	SnapMovementToClimbableSurfaces(deltaTime);
+
+	// stop climbing when reaching flat surface
+	if (FVector::DotProduct(FVector::UpVector, GetCurrentClimbableSurfaceNormal()) > 0.9)
+	{
+		StopClimbing();
+	}
 }
 
 float UCustomMovementComponent::GetMaxSpeed() const
@@ -216,7 +225,8 @@ void UCustomMovementComponent::SnapMovementToClimbableSurfaces(float DeltaTime)
 
 	DrawDebugLine(GetWorld(), Location, Location + ProjectedCharacterToSurface,FColor::Blue);
 	DrawDebugLine(GetWorld(), Location, Location + Forward * 20,FColor::Green);
-
+	DrawDebugLine(GetWorld(), CurrentClimbableSurfaceLocation, CurrentClimbableSurfaceLocation + CurrentClimbableSurfaceNormal * 20,FColor::Red);
+	
 	UpdatedComponent->MoveComponent(
 		MovementDeltaSnappedToSurface * DeltaTime * MaxClimbSpeed,
 		UpdatedComponent->GetComponentQuat(),
