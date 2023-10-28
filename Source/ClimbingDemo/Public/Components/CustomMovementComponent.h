@@ -63,6 +63,7 @@ protected:
 
 public:
 	FORCEINLINE FVector GetCurrentClimbableSurfaceNormal() const { return CurrentClimbableSurfaceNormal; }
+	FORCEINLINE FVector GetCurrentClimbableSurfaceLocation() const { return CurrentClimbableSurfaceLocation; }
 	FQuat GetClimbRotation(float DeltaTime);
 	void StartClimbing();
 	void StopClimbing();
