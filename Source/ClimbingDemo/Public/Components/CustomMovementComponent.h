@@ -6,6 +6,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CustomMovementComponent.generated.h"
 
+class UCharacterAnimInstance;
+
 UENUM(BlueprintType)
 enum class ECustomMovementMode : uint8
 {
@@ -46,12 +48,21 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	float MaxClimbAcceleration = 300.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
+	UCharacterAnimInstance * AnimInstance;
+
 	FVector CurrentClimbableSurfaceLocation;
 	FVector CurrentClimbableSurfaceNormal;
 
 	void SnapMovementToClimbableSurfaces(float DeltaTime);
 
 	void UpdateClimbableSurfaceInfo();
+	void StartClimbingInternal();
+
+	UFUNCTION()
+	void OnAnimMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
+	virtual void BeginPlay() override;
 
 protected:
 	void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;

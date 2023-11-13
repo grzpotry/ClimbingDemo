@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "CharacterAnimInstance.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "ClimbingDemo/ClimbingDemoCharacter.h"
 #include "ClimbingDemo/DebugHelper.h"
@@ -105,7 +106,7 @@ void UCustomMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovem
 		bOrientRotationToMovement = false;
 		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(48.f);
 
-		Debug::PrintWithStack(TEXT("OnMovementModeChanged IsClimbing"));
+		Debug::Print(TEXT("OnMovementModeChanged IsClimbing"));
 	}
 
 	if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode ==  static_cast<uint8>(ECustomMovementMode::MOVE_Climb))
@@ -200,6 +201,24 @@ float UCustomMovementComponent::GetMaxAcceleration() const
 	return Super::GetMaxAcceleration();
 }
 
+void UCustomMovementComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	USkeletalMeshComponent* Mesh = CharacterOwner->GetMesh();
+
+	if (Mesh)
+	{
+		AnimInstance = static_cast<UCharacterAnimInstance*>(Mesh->GetAnimInstance());
+
+		if (AnimInstance)
+		{
+			AnimInstance->OnMontageEnded.AddDynamic(this, &UCustomMovementComponent::OnAnimMontageEnded);
+			AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UCustomMovementComponent::OnAnimMontageEnded);
+		}
+	}
+}
+
 FQuat UCustomMovementComponent::GetClimbRotation(float DeltaTime)
 {
 	const FQuat Current = UpdatedComponent->GetComponentQuat();
@@ -249,8 +268,24 @@ void UCustomMovementComponent::StartClimbing()
 		return;
 	}
 
+	if (!AnimInstance || AnimInstance->IsAnyMontagePlaying() || !AnimInstance->StartClimbMontage)
+	{
+		return;
+	}
+
+	Debug::Print(TEXT("StartClimbMontage"));
+	AnimInstance->Montage_Play(AnimInstance->StartClimbMontage);
+}
+
+void UCustomMovementComponent::StartClimbingInternal()
+{
 	Debug::Print(TEXT("Climbing started"));
 	SetMovementMode(EMovementMode::MOVE_Custom, static_cast<uint8>(ECustomMovementMode::MOVE_Climb));
+}
+
+void UCustomMovementComponent::OnAnimMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	StartClimbingInternal();
 }
 
 void UCustomMovementComponent::StopClimbing()

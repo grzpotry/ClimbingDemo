@@ -36,6 +36,7 @@ void UCharacterAnimInstance::UpdateGroundSpeed()
 
 		if (CustomMovement)
 		{
+			IsClimbing = CustomMovement->IsClimbing();
 			IsFalling = CustomMovement->IsFalling();
 		}
 

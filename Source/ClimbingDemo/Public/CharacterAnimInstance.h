@@ -23,6 +23,9 @@ class CLIMBINGDEMO_API UCharacterAnimInstance : public UAnimInstance
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
 	bool IsFalling;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
+	bool IsClimbing;
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeInitializeAnimation() override;
@@ -34,4 +37,8 @@ class CLIMBINGDEMO_API UCharacterAnimInstance : public UAnimInstance
 	UCustomMovementComponent * CustomMovement;
 
 	void UpdateGroundSpeed();
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage * StartClimbMontage;
 };
