@@ -51,6 +51,9 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	UCharacterAnimInstance * AnimInstance;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
+	FVector ClimbVelocity;
+
 	FVector CurrentClimbableSurfaceLocation;
 	FVector CurrentClimbableSurfaceNormal;
 
@@ -73,6 +76,8 @@ protected:
 	virtual float GetMaxAcceleration() const override;
 
 public:
+	UFUNCTION()
+	FVector GetClimbVelocity();
 	FORCEINLINE FVector GetCurrentClimbableSurfaceNormal() const { return CurrentClimbableSurfaceNormal; }
 	FORCEINLINE FVector GetCurrentClimbableSurfaceLocation() const { return CurrentClimbableSurfaceLocation; }
 	FQuat GetClimbRotation(float DeltaTime);

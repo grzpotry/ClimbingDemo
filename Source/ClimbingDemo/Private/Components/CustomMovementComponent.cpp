@@ -10,6 +10,7 @@
 #include "ClimbingDemo/ClimbingDemoCharacter.h"
 #include "ClimbingDemo/DebugHelper.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                              FActorComponentTickFunction* ThisTickFunction)
@@ -199,6 +200,11 @@ float UCustomMovementComponent::GetMaxAcceleration() const
 		return MaxClimbAcceleration;
 	}
 	return Super::GetMaxAcceleration();
+}
+
+FVector UCustomMovementComponent::GetClimbVelocity()
+{
+	return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(), UpdatedComponent->GetComponentVelocity());
 }
 
 void UCustomMovementComponent::BeginPlay()

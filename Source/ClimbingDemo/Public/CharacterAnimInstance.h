@@ -27,6 +27,9 @@ class CLIMBINGDEMO_API UCharacterAnimInstance : public UAnimInstance
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
 	bool IsClimbing;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
+	FVector ClimbVelocity;
+
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 	virtual void NativeInitializeAnimation() override;
 
