@@ -22,10 +22,10 @@ class CLIMBINGDEMO_API UCharacterAnimInstance : public UAnimInstance
 	float AirSpeed;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
-	bool IsFalling;
+	bool bIsFalling;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
-	bool IsClimbing;
+	bool bIsClimbing;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
 	FVector ClimbVelocity;

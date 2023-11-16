@@ -51,9 +51,6 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	UCharacterAnimInstance * AnimInstance;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
-	FVector ClimbVelocity;
-
 	FVector CurrentClimbableSurfaceLocation;
 	FVector CurrentClimbableSurfaceNormal;
 
@@ -61,6 +58,8 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 
 	void UpdateClimbableSurfaceInfo();
 	void StartClimbingInternal();
+
+	bool ShouldStopClimbing(FVector currentClimbableSurfaceNormal);
 
 	UFUNCTION()
 	void OnAnimMontageEnded(UAnimMontage* Montage, bool bInterrupted);

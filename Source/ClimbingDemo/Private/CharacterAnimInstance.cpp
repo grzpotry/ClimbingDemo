@@ -36,8 +36,8 @@ void UCharacterAnimInstance::UpdateGroundSpeed()
 
 		if (CustomMovement)
 		{
-			IsClimbing = CustomMovement->IsClimbing();
-			IsFalling = CustomMovement->IsFalling();
+			bIsClimbing = CustomMovement->IsClimbing();
+			bIsFalling = CustomMovement->IsFalling();
 			ClimbVelocity = CustomMovement->GetClimbVelocity();
 		}
 

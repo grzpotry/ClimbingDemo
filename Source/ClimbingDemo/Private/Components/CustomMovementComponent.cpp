@@ -2,9 +2,6 @@
 
 
 #include "Components/CustomMovementComponent.h"
-
-#include <string>
-
 #include "CharacterAnimInstance.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "ClimbingDemo/ClimbingDemoCharacter.h"
@@ -142,6 +139,12 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 
 	 //calculate climbable surface, check if climbing
 	 UpdateClimbableSurfaceInfo();
+
+	if (ShouldStopClimbing(GetCurrentClimbableSurfaceNormal()))
+	{
+		StopClimbing();
+		return;
+	}
 	
 	 //boilerplate code from PhysFly
 	 RestorePreAdditiveRootMotionVelocity();
@@ -175,12 +178,6 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 	 }
 
 	SnapMovementToClimbableSurfaces(deltaTime);
-
-	// stop climbing when reaching flat surface
-	if (FVector::DotProduct(FVector::UpVector, GetCurrentClimbableSurfaceNormal()) > 0.9)
-	{
-		StopClimbing();
-	}
 }
 
 float UCustomMovementComponent::GetMaxSpeed() const
@@ -287,6 +284,35 @@ void UCustomMovementComponent::StartClimbingInternal()
 {
 	Debug::Print(TEXT("Climbing started"));
 	SetMovementMode(EMovementMode::MOVE_Custom, static_cast<uint8>(ECustomMovementMode::MOVE_Climb));
+}
+
+bool UCustomMovementComponent::ShouldStopClimbing(FVector currentClimbableSurfaceNormal)
+{
+	// stop climbing when reaching flat surface (when going up)
+	if (FVector::DotProduct(FVector::UpVector, currentClimbableSurfaceNormal) > 0.9)
+	{
+		return true;
+	}
+	
+	FVector downVec = -UpdatedComponent->GetUpVector();
+	FVector offset = downVec * 75.0f;
+	FVector start = UpdatedComponent->GetComponentLocation();
+	FVector end = start + offset;
+
+	// is climbing down on floor
+	TArray<FHitResult> results = DoCapsuleTraceMultiByObject(start, end, true);
+
+	for (FHitResult result  : results)
+	{
+		bool isFloorHit = FVector::Parallel(FVector::UpVector, -result.ImpactNormal) == 1 && GetClimbVelocity().Z < -1;
+		
+		if (isFloorHit)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void UCustomMovementComponent::OnAnimMontageEnded(UAnimMontage* Montage, bool bInterrupted)
