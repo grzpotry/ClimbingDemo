@@ -59,7 +59,7 @@ TArray<FHitResult> UCustomMovementComponent::TraceClimbableSurfaces()
 	FVector start = UpdatedComponent->GetComponentLocation() + offset;
 	FVector end = start + forwardVector;
 
-	return DoCapsuleTraceMultiByObject(start, end, true);
+	return DoCapsuleTraceMultiByObject(start, end, false);
 }
 
 FHitResult UCustomMovementComponent::TraceFromEyeHeight(float TraceDistance, float TraceStartOffset)
@@ -135,6 +135,21 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 	if (deltaTime < MIN_TICK_TIME)
 	{
 		return;
+	}
+
+
+	FHitResult eyeTraceHit = TraceFromEyeHeight(50.0);
+
+	if (!eyeTraceHit.HasValidHitObjectHandle())
+	{
+		FVector start = eyeTraceHit.TraceEnd;
+		FVector end = start + 50 * FVector::DownVector;
+		FHitResult ledgeSurface = DoLineTraceSingleByObject(start, end, true);
+
+		if (ledgeSurface.bBlockingHit && GetClimbVelocity().Z > 5.0)
+		{
+			Debug::Print(TEXT("Ledge reached"));
+		}
 	}
 
 	 //calculate climbable surface, check if climbing
@@ -300,7 +315,7 @@ bool UCustomMovementComponent::ShouldStopClimbing(FVector currentClimbableSurfac
 	FVector end = start + offset;
 
 	// is climbing down on floor
-	TArray<FHitResult> results = DoCapsuleTraceMultiByObject(start, end, true);
+	TArray<FHitResult> results = DoCapsuleTraceMultiByObject(start, end, false);
 
 	for (FHitResult result  : results)
 	{
