@@ -2,6 +2,18 @@
 
 
 #include "Components/CustomMovementComponent.h"
+
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
+#include "CharacterAnimInstance.h"
 #include "CharacterAnimInstance.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "ClimbingDemo/ClimbingDemoCharacter.h"
@@ -130,26 +142,46 @@ void UCustomMovementComponent::PhysCustom(float deltaTime, int32 Iterations)
 	Super::PhysCustom(deltaTime, Iterations);
 }
 
-void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
+bool UCustomMovementComponent::IsUpperLedgeReached()
 {
-	if (deltaTime < MIN_TICK_TIME)
-	{
-		return;
-	}
-
-
 	FHitResult eyeTraceHit = TraceFromEyeHeight(50.0);
 
 	if (!eyeTraceHit.HasValidHitObjectHandle())
 	{
 		FVector start = eyeTraceHit.TraceEnd;
-		FVector end = start + 50 * FVector::DownVector;
-		FHitResult ledgeSurface = DoLineTraceSingleByObject(start, end, true);
+		FVector end = start + 20 * FVector::DownVector;
+		FHitResult ledgeSurface = DoLineTraceSingleByObject(start, end, false);
 
-		if (ledgeSurface.bBlockingHit && GetClimbVelocity().Z > 5.0)
+		if (ledgeSurface.bBlockingHit && GetClimbVelocity().Z > 10)
 		{
-			Debug::Print(TEXT("Ledge reached"));
+			return true;
 		}
+	}
+
+	return false;
+}
+
+bool UCustomMovementComponent::CanClimbDown()
+{
+	FVector startOffsetVec = UpdatedComponent->GetForwardVector() * 50;
+	FVector start = UpdatedComponent->GetComponentLocation() + startOffsetVec;
+	FVector end = start + 100 * FVector::DownVector;
+	
+	if (DoLineTraceSingleByObject(start, end, true).bBlockingHit)
+	{
+		return false;
+	}
+
+	bool isClimbableSurfaceUnderneathCharacter = DoLineTraceSingleByObject(end, end - startOffsetVec, true).bBlockingHit != 0;
+	
+	return isClimbableSurfaceUnderneathCharacter;
+}
+
+void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
+{
+	if (deltaTime < MIN_TICK_TIME)
+	{
+		return;
 	}
 
 	 //calculate climbable surface, check if climbing
@@ -193,6 +225,11 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 	 }
 
 	SnapMovementToClimbableSurfaces(deltaTime);
+		
+	if (IsUpperLedgeReached())
+	{
+		TryPlayMontage(AnimInstance->ClimbOnEdgeMontage);
+	}
 }
 
 float UCustomMovementComponent::GetMaxSpeed() const
@@ -272,8 +309,27 @@ void UCustomMovementComponent::SnapMovementToClimbableSurfaces(float DeltaTime)
 
 }
 
+bool UCustomMovementComponent::TryPlayMontage(UAnimMontage* Montage)
+{
+	if (!AnimInstance || AnimInstance->IsAnyMontagePlaying() || !Montage)
+	{
+		return false;
+	}
+
+	Debug::Print(TEXT("successfully played montage"));
+	AnimInstance->Montage_Play(Montage);
+	return true;
+}
+
 void UCustomMovementComponent::StartClimbing()
 {
+	if (!IsClimbing() && !IsFalling() && CanClimbDown())
+	{
+		Debug::Print(TEXT("CanClimbDown"));
+		TryPlayMontage(AnimInstance->ClimbFromEdgeMontage);
+		return;
+	}
+	
 	if (!CanClimb())
 	{
 		Debug::Print(TEXT("Can't climb"));
@@ -285,14 +341,33 @@ void UCustomMovementComponent::StartClimbing()
 		Debug::Print(TEXT("Already climbing"));
 		return;
 	}
+	
+	TryPlayMontage(AnimInstance->StartClimbMontage);
+}
 
-	if (!AnimInstance || AnimInstance->IsAnyMontagePlaying() || !AnimInstance->StartClimbMontage)
+FVector UCustomMovementComponent::ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity,
+	const FVector& CurrentVelocity) const
+{
+	if (IsFalling() && AnimInstance && AnimInstance->IsAnyMontagePlaying())
 	{
-		return;
-	}
+		bool isPlayingClimbOnEdgeMontage = false;
+		
+		for (FAnimMontageInstance * playingMontage : AnimInstance->MontageInstances)
+		{
+			if (playingMontage->Montage == AnimInstance->ClimbOnEdgeMontage)
+			{
+				isPlayingClimbOnEdgeMontage = true;
+				break;
+			}
+		}
 
-	Debug::Print(TEXT("StartClimbMontage"));
-	AnimInstance->Montage_Play(AnimInstance->StartClimbMontage);
+		if (isPlayingClimbOnEdgeMontage)
+		{
+			return RootMotionVelocity;
+		}
+	}
+	
+	return Super::ConstrainAnimRootMotionVelocity(RootMotionVelocity, CurrentVelocity);
 }
 
 void UCustomMovementComponent::StartClimbingInternal()
@@ -304,18 +379,18 @@ void UCustomMovementComponent::StartClimbingInternal()
 bool UCustomMovementComponent::ShouldStopClimbing(FVector currentClimbableSurfaceNormal)
 {
 	// stop climbing when reaching flat surface (when going up)
-	if (FVector::DotProduct(FVector::UpVector, currentClimbableSurfaceNormal) > 0.9)
+	if (FVector::DotProduct(FVector::UpVector, currentClimbableSurfaceNormal) > 0.9 && GetClimbVelocity().Z > 10)
 	{
 		return true;
 	}
 	
 	FVector downVec = -UpdatedComponent->GetUpVector();
-	FVector offset = downVec * 75.0f;
+	FVector offset = downVec * 50.0f;
 	FVector start = UpdatedComponent->GetComponentLocation();
 	FVector end = start + offset;
 
 	// is climbing down on floor
-	TArray<FHitResult> results = DoCapsuleTraceMultiByObject(start, end, false);
+	TArray<FHitResult> results = DoCapsuleTraceMultiByObject(start, end, true);
 
 	for (FHitResult result  : results)
 	{
@@ -323,6 +398,7 @@ bool UCustomMovementComponent::ShouldStopClimbing(FVector currentClimbableSurfac
 		
 		if (isFloorHit)
 		{
+			Debug::Print(TEXT("REACHED FLOOR"));
 			return true;
 		}
 	}
@@ -332,7 +408,15 @@ bool UCustomMovementComponent::ShouldStopClimbing(FVector currentClimbableSurfac
 
 void UCustomMovementComponent::OnAnimMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	StartClimbingInternal();
+	if (Montage == AnimInstance->StartClimbMontage || Montage == AnimInstance->ClimbFromEdgeMontage)
+	{
+		StartClimbingInternal();
+	}
+
+	if (Montage == AnimInstance->ClimbOnEdgeMontage)
+	{
+		SetMovementMode(MOVE_Walking);
+	}
 }
 
 void UCustomMovementComponent::StopClimbing()

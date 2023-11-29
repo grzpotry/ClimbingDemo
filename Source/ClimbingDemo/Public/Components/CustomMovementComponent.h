@@ -55,6 +55,7 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 	FVector CurrentClimbableSurfaceNormal;
 
 	void SnapMovementToClimbableSurfaces(float DeltaTime);
+	bool TryPlayMontage(UAnimMontage* Montage);
 
 	void UpdateClimbableSurfaceInfo();
 	void StartClimbingInternal();
@@ -69,10 +70,14 @@ class CLIMBINGDEMO_API UCustomMovementComponent : public UCharacterMovementCompo
 protected:
 	void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
+	bool IsUpperLedgeReached();
+	bool CanClimbDown();
 	void PhysClimb(float deltaTime, int32 Iterations);
 
 	virtual float GetMaxSpeed() const override;
 	virtual float GetMaxAcceleration() const override;
+
+	virtual FVector ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity, const FVector& CurrentVelocity) const override;
 
 public:
 	UFUNCTION()

@@ -44,4 +44,10 @@ class CLIMBINGDEMO_API UCharacterAnimInstance : public UAnimInstance
 public:
 	UPROPERTY(EditDefaultsOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage * StartClimbMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage * ClimbOnEdgeMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage * ClimbFromEdgeMontage;
 };
