@@ -3,6 +3,9 @@
 
 #include "CharacterAnimInstance.h"
 
+#include <string>
+
+#include "ClimbingDemo/DebugHelper.h"
 #include "Components/CustomMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -32,6 +35,7 @@ void UCharacterAnimInstance::UpdateGroundSpeed()
 	{
 		CustomMovement = Character->GetCustomMovementComponent();
 		GroundSpeed = UKismetMathLibrary::VSizeXY(Character->GetVelocity());
+		//Debug::Print(FString::Printf(TEXT("GroundSpeed: %f"), GroundSpeed));
 		AirSpeed = Character->GetVelocity().Z;
 
 		if (CustomMovement)

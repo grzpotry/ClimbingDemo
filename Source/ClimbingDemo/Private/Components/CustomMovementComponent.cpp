@@ -19,6 +19,7 @@
 #include "ClimbingDemo/ClimbingDemoCharacter.h"
 #include "ClimbingDemo/DebugHelper.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -211,7 +212,7 @@ void UCustomMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 	 //handle rotation
 	 SafeMoveUpdatedComponent(Adjusted, GetClimbRotation(deltaTime), true, Hit);
 	
-	 if (Hit.Time < 1.f)
+	 if (Hit.Time < 1.f && !AnimInstance->IsAnyMontagePlaying()) //prevent from sliding when playing climb down montage - it results in accelerated fall
 	 {
 	 	//adjust and try again
 	 	HandleImpact(Hit, deltaTime, Adjusted);
@@ -390,7 +391,7 @@ bool UCustomMovementComponent::ShouldStopClimbing(FVector currentClimbableSurfac
 	FVector end = start + offset;
 
 	// is climbing down on floor
-	TArray<FHitResult> results = DoCapsuleTraceMultiByObject(start, end, true);
+	TArray<FHitResult> results = DoCapsuleTraceMultiByObject(start, end, false);
 
 	for (FHitResult result  : results)
 	{
