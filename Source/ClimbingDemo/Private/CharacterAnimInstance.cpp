@@ -13,7 +13,6 @@
 void UCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
-
 	UpdateGroundSpeed();
 }
 

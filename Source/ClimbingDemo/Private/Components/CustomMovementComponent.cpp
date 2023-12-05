@@ -164,8 +164,8 @@ bool UCustomMovementComponent::IsUpperLedgeReached()
 
 bool UCustomMovementComponent::CanClimbDown()
 {
-	FVector startOffsetVec = UpdatedComponent->GetForwardVector() * 50;
-	FVector start = UpdatedComponent->GetComponentLocation() + startOffsetVec;
+	FVector startOffsetVec = UpdatedComponent->GetForwardVector() * 25;
+	FVector start = UpdatedComponent->GetComponentLocation() + startOffsetVec + 70 * FVector::DownVector ;
 	FVector end = start + 100 * FVector::DownVector;
 	
 	if (DoLineTraceSingleByObject(start, end, true).bBlockingHit)
@@ -328,6 +328,7 @@ void UCustomMovementComponent::StartClimbing()
 	{
 		Debug::Print(TEXT("CanClimbDown"));
 		TryPlayMontage(AnimInstance->ClimbFromEdgeMontage);
+		//UGameplayStatics::SetGlobalTimeDilation(this, 0.2f);
 		return;
 	}
 	
@@ -412,6 +413,7 @@ void UCustomMovementComponent::OnAnimMontageEnded(UAnimMontage* Montage, bool bI
 	if (Montage == AnimInstance->StartClimbMontage || Montage == AnimInstance->ClimbFromEdgeMontage)
 	{
 		StartClimbingInternal();
+		StopMovementImmediately();
 	}
 
 	if (Montage == AnimInstance->ClimbOnEdgeMontage)
