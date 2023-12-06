@@ -25,6 +25,7 @@
 void UCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                              FActorComponentTickFunction* ThisTickFunction)
 {
+	//Debug::Print(FString::Printf(TEXT("Is falling: %hd"), IsFalling()));
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
