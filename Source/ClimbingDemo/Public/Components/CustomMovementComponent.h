@@ -90,4 +90,6 @@ public:
 
 	bool IsClimbing() const;
 	bool CanClimb();
+
+	bool CanPerformVaulting(FVector& OutStartPosition, FVector& OutEndPosition);
 };

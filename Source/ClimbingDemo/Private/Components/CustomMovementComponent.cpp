@@ -60,7 +60,7 @@ FHitResult UCustomMovementComponent::DoLineTraceSingleByObject(const FVector& St
 		ClimbableSurfaceTraceTypes,
 		false,
 		TArray<AActor*>(),
-		bShowDebug ? EDrawDebugTrace::ForOneFrame : EDrawDebugTrace::None,
+		bShowDebug ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
 		OutHit, false);
 
 	return OutHit;
@@ -169,7 +169,7 @@ bool UCustomMovementComponent::CanClimbDown()
 	FVector start = UpdatedComponent->GetComponentLocation() + startOffsetVec + 70 * FVector::DownVector ;
 	FVector end = start + 100 * FVector::DownVector;
 	
-	if (DoLineTraceSingleByObject(start, end, true).bBlockingHit)
+	if (DoLineTraceSingleByObject(start, end, false).bBlockingHit)
 	{
 		return false;
 	}
@@ -333,19 +333,29 @@ void UCustomMovementComponent::StartClimbing()
 		return;
 	}
 	
-	if (!CanClimb())
+	if (CanClimb())
 	{
-		Debug::Print(TEXT("Can't climb"));
+		if (IsClimbing())
+		{
+			Debug::Print(TEXT("Already climbing"));
+			return;
+		}
+		
+		TryPlayMontage(AnimInstance->StartClimbMontage);
 		return;
 	}
 
-	if (IsClimbing())
-	{
-		Debug::Print(TEXT("Already climbing"));
-		return;
-	}
+	FVector outStartPos;
+	FVector outEndPos;
 	
-	TryPlayMontage(AnimInstance->StartClimbMontage);
+	if (CanPerformVaulting(outStartPos, outEndPos))
+	{
+		Debug::Print(TEXT("Can vault"));
+	}
+	else
+	{
+		Debug::Print(TEXT("Can NOT vault"));
+	}
 }
 
 FVector UCustomMovementComponent::ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity,
@@ -447,4 +457,34 @@ bool UCustomMovementComponent::CanClimb()
 	}
 
 	return true;
+}
+
+bool UCustomMovementComponent::CanPerformVaulting(FVector& OutStartPosition, FVector& OutEndPosition)
+{
+	FVector UpVector = UpdatedComponent->GetUpVector();
+	FVector DownVector = -UpdatedComponent->GetUpVector();
+
+	OutStartPosition = FVector::Zero();
+	OutEndPosition = FVector::Zero();
+
+	for (int i = 0; i < 5; i++)
+	{
+		FVector Start = UpdatedComponent->GetComponentLocation() + UpdatedComponent->GetForwardVector() * (100 * (i+1)) + UpVector * 50;
+		FVector End = Start + DownVector * 200;
+		FHitResult result = DoLineTraceSingleByObject(Start, End, true);
+
+		if (result.IsValidBlockingHit())
+		{
+			if (OutStartPosition == FVector::Zero())
+			{
+				OutStartPosition = result.ImpactPoint;
+			}
+			else
+			{
+				OutEndPosition = result.ImpactPoint;
+			}
+		}
+	}
+	
+	return OutStartPosition != FVector::Zero() && OutEndPosition != FVector::Zero();
 }
