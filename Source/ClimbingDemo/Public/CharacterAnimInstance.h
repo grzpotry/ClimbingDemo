@@ -50,4 +50,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
 	UAnimMontage * ClimbFromEdgeMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Reference", meta = (AllowPrivateAccess = "true"))
+	UAnimMontage * VaultMontage;
 };

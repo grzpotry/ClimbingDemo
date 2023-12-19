@@ -49,7 +49,7 @@ TArray<FHitResult> UCustomMovementComponent::DoCapsuleTraceMultiByObject(const F
 	return OutCapsuleTraceHitResults;
 }
 
-FHitResult UCustomMovementComponent::DoLineTraceSingleByObject(const FVector& Start, const FVector& End, bool bShowDebug)
+FHitResult UCustomMovementComponent::DoLineTraceSingleByObject(const FVector& Start, const FVector& End, bool bShowDebug, FLinearColor TraceColor)
 {
 	FHitResult OutHit;
 
@@ -61,7 +61,7 @@ FHitResult UCustomMovementComponent::DoLineTraceSingleByObject(const FVector& St
 		false,
 		TArray<AActor*>(),
 		bShowDebug ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,
-		OutHit, false);
+		OutHit, false, TraceColor);
 
 	return OutHit;
 }
@@ -351,6 +351,15 @@ void UCustomMovementComponent::StartClimbing()
 	if (CanPerformVaulting(outStartPos, outEndPos))
 	{
 		Debug::Print(TEXT("Can vault"));
+
+		if (UMotionWarpingComponent* motionWarping = Cast<AClimbingDemoCharacter>(CharacterOwner)->GetMotionWarpingComponent())
+		{
+			motionWarping->AddOrUpdateWarpTargetFromLocation(FName("VaultStartPosition"), outStartPos);
+			motionWarping->AddOrUpdateWarpTargetFromLocation(FName("VaultEndPosition"), outEndPos);
+
+			StartClimbingInternal();
+			TryPlayMontage(AnimInstance->VaultMontage);
+		}
 	}
 	else
 	{
@@ -427,7 +436,7 @@ void UCustomMovementComponent::OnAnimMontageEnded(UAnimMontage* Montage, bool bI
 		StopMovementImmediately();
 	}
 
-	if (Montage == AnimInstance->ClimbOnEdgeMontage)
+	if (Montage == AnimInstance->ClimbOnEdgeMontage || Montage == AnimInstance->VaultMontage)
 	{
 		SetMovementMode(MOVE_Walking);
 	}
@@ -467,24 +476,43 @@ bool UCustomMovementComponent::CanPerformVaulting(FVector& OutStartPosition, FVe
 	OutStartPosition = FVector::Zero();
 	OutEndPosition = FVector::Zero();
 
-	for (int i = 0; i < 5; i++)
+	FVector StartPositionDebugStart = FVector::Zero();
+	FVector EndPositionDebugStart = FVector::Zero();
+	
+	int Steps = 5;
+	int TraceDistance = 100;
+	
+	for (int i = 0; i < Steps; i++)
 	{
-		FVector Start = UpdatedComponent->GetComponentLocation() + UpdatedComponent->GetForwardVector() * (100 * (i+1)) + UpVector * 50;
-		FVector End = Start + DownVector * 200;
+		FVector Start = UpdatedComponent->GetComponentLocation() + UpdatedComponent->GetForwardVector() * (TraceDistance * (i+1)) + UpVector * 150;
+		FVector End = Start + DownVector * 1000;
 		FHitResult result = DoLineTraceSingleByObject(Start, End, true);
 
 		if (result.IsValidBlockingHit())
 		{
-			if (OutStartPosition == FVector::Zero())
+			if (OutStartPosition == FVector::Zero() && result.ImpactPoint.Z > 10)
 			{
-				OutStartPosition = result.ImpactPoint;
+				OutStartPosition = result.ImpactPoint + FVector_NetQuantize(0, 0, 5);
+				StartPositionDebugStart = Start;
+
+				// higher distance for second jump
+				TraceDistance = 150;
 			}
 			else
 			{
 				OutEndPosition = result.ImpactPoint;
+				EndPositionDebugStart = Start;
 			}
 		}
 	}
 	
-	return OutStartPosition != FVector::Zero() && OutEndPosition != FVector::Zero();
+	bool result = OutStartPosition != FVector::Zero() && OutEndPosition != FVector::Zero();
+
+	if (result)
+	{
+		DoLineTraceSingleByObject(StartPositionDebugStart, OutStartPosition, true, FLinearColor::Green);
+		DoLineTraceSingleByObject(EndPositionDebugStart, OutEndPosition, true, FLinearColor::Green);
+	}
+
+	return result;
 }
