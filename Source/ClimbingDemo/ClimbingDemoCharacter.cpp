@@ -131,9 +131,16 @@ void AClimbingDemoCharacter::HandleGroundMovement(const FInputActionValue& Value
 	// get right vector 
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
+	double characterToCameraDot = FVector::DotProduct(ForwardDirection, GetCameraBoom()->GetForwardVector());
+
+	// allow "backward" movement - when character is oriented according to camera forward and input vector triggers movement in opposite direction
+	CustomMovementComponent->bOrientRotationToMovement = MovementVector.Y > -0.95 || MovementVector.X > 0 || characterToCameraDot < 0.95;
+
+	//Debug::Print(FString::Printf(TEXT("%f"), characterToCameraDot));
+	
 	// add movement 
-	AddMovementInput(ForwardDirection, MovementVector.Y);
-	AddMovementInput(RightDirection, MovementVector.X);
+	 AddMovementInput(ForwardDirection, MovementVector.Y);
+	 AddMovementInput(RightDirection, MovementVector.X);
 }
 
 void AClimbingDemoCharacter::HandleClimbMovement(const FInputActionValue& Value)
